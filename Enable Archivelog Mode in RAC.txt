@@ -1,0 +1,38 @@
+=================================
+ENABLING ARCHIVE LOG MODE IN RAC
+=================================
+
+CHECK CURRENT LOG MODE
+----------------------
+
+SQL> select log_mode from v$database;
+SQL> show parameter recovery;
+SQL> alter system set db_recovery_file_dest_size = '20G' scope=both sid='*';
+
+=====
+NOTE
+=====
+If DB_RECOVERY_FILE_DEST is set to disk group, LOG_ARCHIVE_FORMAT is ignored
+If DB_RECOVERY_FILE_DEST is set to disk group location, LOG_ARCHIVE_FORMAT comes in effect
+
+
+From node 1:
+------------
+ALTER SYSTEM SET log_archive_dest_1='location=+FRA/RAC/ARCH/' SCOPE=spfile;
+ALTER SYSTEM SET log_archive_format='arch_%t_%s_%r.arc' SCOPE=spfile;
+
+./srvctl stop database -d RAC
+
+sqlplus / as sysdba
+startup mount
+alter database archivelog;
+alter database open;
+
+select log_mode from v$database;
+
+
+From node 2:
+------------
+startup
+select log_mode from v$database;
+archive log list;
